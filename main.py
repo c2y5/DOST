@@ -7,7 +7,7 @@ import fade
 
 loadingBreak = False
 
-os.system("title DOST v1.0")
+os.system("title DOST v1.1")
 
 def clear():
     os.system("cls" if os.name == "nt" else "clear")
@@ -61,6 +61,7 @@ import asyncio
 import tkinter as tk
 from tkinter import filedialog
 import shutil
+import gzip
 
 loadingBreak = True
 time.sleep(0.1)
@@ -290,8 +291,8 @@ def downloadFile():
                 
                 loadingBreak = True
                 time.sleep(0.1)
-                loading(f"Adding chunck {str(fff)}/{ff} to {saveName}")
-                with open(f"./downloads/{saveName}", "ab") as _:
+                loading(f"Adding chunck {str(fff)}/{ff} to {saveName}.gz")
+                with open(f"./downloads/{saveName}.gz", "ab") as _:
                     _.write(decryptedContent)
                     
                 fff += 1
@@ -302,6 +303,12 @@ def downloadFile():
                 os.remove(os.path.join("./assets/temp-download", x))
                 loadingBreak = True
                 time.sleep(0.1)
+
+            with gzip.open(f"./downloads/{saveName}.gz", 'rb') as f_in:
+                with open(f"./downloads/{saveName}", 'wb') as f_out:
+                    f_out.write(f_in.read())
+
+            os.remove(f"./downloads/{saveName}.gz")
 
         for x in choice:
             if data[List[x]]:
@@ -399,6 +406,15 @@ def upload():
     time.sleep(0.1)
     loadingBreak = True
     time.sleep(0.1)
+    loading("Zipping file")
+    with open(fpath, "rb") as f:
+        with gzip.open("./assets/upload-temp/"+os.path.basename(fpath)+".gz", "wb") as zf:
+            zf.writelines(f)
+
+    loadingBreak = True
+    time.sleep(0.1)
+    origionalfname = os.path.basename(fpath)
+    fpath = "./assets/upload-temp/"+os.path.basename(fpath)+".gz"
     loading("Calculating size")
     fsize = os.path.getsize(fpath)
     
@@ -441,30 +457,32 @@ def upload():
     
     loadingBreak = True
     time.sleep(0.1)
-    if fsize >= 25*1024*1024:
+    
+    if fsize >= 18*1024*1024:
         print("\nFile > 25MB")
-        chunckAmount = (fsize+(15*1024*1024)-1) // (15*1024*1024)
+        chunckAmount = (fsize+(18*1024*1024)-1) // (18*1024*1024)
         print(f"Total chuncks: {str(chunckAmount)}")
         print("\n")
         cm = 1
         with open(fpath, "rb") as f:
             for i in range(chunckAmount):
                 loading(f"Splitting chunck {str(cm)}/{str(chunckAmount)}")
-                chunk = f.read(15*1024*1024)
+                chunk = f.read(18*1024*1024)
                 with open(f"./assets/upload-temp/{os.path.basename(fpath)}.chunck{i+1}.txt", "wb") as cf:
                     cf.write(chunk)
                 loadingBreak = True
                 time.sleep(0.1)
-                re = asyncio.run_coroutine_threadsafe(uploadFile(os.path.basename(fpath), f"./assets/upload-temp/{os.path.basename(fpath)}.chunck{i+1}.txt", f"{os.path.basename(fpath)}.chunck{i+1}.txt"), client.loop)
+                re = asyncio.run_coroutine_threadsafe(uploadFile(origionalfname, f"./assets/upload-temp/{os.path.basename(fpath)}.chunck{i+1}.txt", f"{os.path.basename(fpath)}.chunck{i+1}.txt"), client.loop)
                 re.result()
                 cm += 1
     else:
         print("File < 25MB\n")
         shutil.copy(fpath, f"./assets/upload-temp/{os.path.basename(fpath)}.txt")
         
-        re = asyncio.run_coroutine_threadsafe(uploadFile(os.path.basename(fpath), f"./assets/upload-temp/{os.path.basename(fpath)}.txt", os.path.basename(fpath)), client.loop)
+        re = asyncio.run_coroutine_threadsafe(uploadFile(os.path.basename(fpath), f"./assets/upload-temp/{os.path.basename(fpath)}.txt", origionalfname), client.loop)
         re.result()
     
+    os.remove(fpath)
     print("\033[90mPress enter to go back\033[0m")
     input()
     main()
