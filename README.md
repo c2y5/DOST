@@ -5,6 +5,10 @@
 - [+] Delete uplaoded files from discord
 - [+] Download files from discord
 
+## TODO LIST
+- [-] Remove deletion bugs
+- [+] Add compression for faster uploads
+
 ## What is DOST
 DOST is a Discord CDN based file host
 
