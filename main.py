@@ -79,7 +79,7 @@ def encrypt(plaintext, key):
     salt = os.urandom(16)
     derived_key = derive_key(key, salt)
     padder = padding.PKCS7(128).padder()
-    padded_data = padder.update(plaintext) + padder.finalize()  # No encoding needed
+    padded_data = padder.update(plaintext) + padder.finalize()
     iv = os.urandom(16)
     cipher = Cipher(algorithms.AES(derived_key), modes.CBC(iv), backend=default_backend())
     encryptor = cipher.encryptor()
